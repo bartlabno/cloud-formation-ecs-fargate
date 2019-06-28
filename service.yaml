@@ -20,10 +20,39 @@ Parameters:
     Description: The Application Load Balancer listener to register with
     Type: String
 
-  Path:
-    Description: The path to register with the Application Load Balancer
+  HealthCheckPath:
+    Description: Healthcheck path for Application Load Balancer
     Type: String
-    Default: /products
+    Default: /health
+
+  Environment:
+    Description: Environment to deploy to
+    Type: String
+
+  ProjectName:
+    Description: Project Name
+    Type: String
+
+  ApplicationName:
+    Description: Application Name
+    Type: String
+
+  BranchName:
+    Description: Current name of git branch
+    Type: String
+
+  BuildNumber:
+    Description: Jenkins build Number
+    Type: String
+
+  PortExpose:
+    Description: Port to be exposed
+    Type: String
+
+  MemoryLimit:
+    Description: Memory Limit for Container
+    Type: String
+    Default: 512
 
 Resources:
   Service:
@@ -35,43 +64,45 @@ Resources:
       DesiredCount: !Ref DesiredCount
       TaskDefinition: !Ref TaskDefinition
       LoadBalancers:
-        - ContainerName: "product-service"
-          ContainerPort: 8001
+        - ContainerName: !Sub ${ProductName}-${ApplicationName}-${Environment}
+          ContainerPort: !Ref PortExpose
           TargetGroupArn: !Ref TargetGroup
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: product-service
+      Family: !Ref ApplicationName
       ContainerDefinitions:
-        - Name: product-service
+        - Name: !Ref ApplicationName
           Essential: true
-          Image: 275396840892.dkr.ecr.us-east-1.amazonaws.com/ecs-refarch-cloudformation/product-service:1.0.0
-          Memory: 128
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-${ApplicationName}:${BranchName}-${BuildNumber}
+          Memory: !Ref MemoryLimit
           PortMappings:
-            - ContainerPort: 8001
+            - ContainerPort: !Ref PortExpose
+              HostPort: !Ref PortExpose
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref CloudWatchLogsGroup
+              awslogs-group: !Sub ${ProjectName}-${Environment}
               awslogs-region: !Ref AWS::Region
+              awslogs-prefix: !Ref ApplicationName
 
   CloudWatchLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Ref AWS::StackName
+      LogGroupName: !Sub ${ProjectName}-${Environment}
       RetentionInDays: 365
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !Ref VPC
-      Port: 80
+      Port: !Ref PortExpose
       Protocol: HTTP
       Matcher:
         HttpCode: 200-299
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /products
+      HealthCheckPath: !Ref HealthCheckPath
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
@@ -80,11 +111,10 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn: !Ref Listener
-      Priority: 2
       Conditions:
-        - Field: path-pattern
+        - Field: host-header
           Values:
-            - !Ref Path
+            - !Ref Domain
       Actions:
         - TargetGroupArn: !Ref TargetGroup
           Type: forward
