@@ -1,8 +1,15 @@
 Description: >
-  This template deploys an Application Load Balancer that exposes our various ECS services.
-  We create them in a seperate nested template, so it can be referenced by all of the other nested templates.
+  This template deploys an Application Load Balancer that exposes various ECS services.
 
 Parameters:
+  ProjectName:
+    Description: Project name for all services
+    Type: String
+
+  ApplicationName:
+    Description: Application name
+    Type: String
+
   EnvironmentName:
     Description: An environment name that will be prefixed to resource names
     Type: String
@@ -19,23 +26,31 @@ Parameters:
     Description: Select the Security Group to apply to the Application Load Balancer
     Type: AWS::EC2::SecurityGroup::Id
 
+  PortExpose:
+    Description: Expose port on LoadBalancer
+    Type: String
+
 Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Ref EnvironmentName
+      Name: !Sub ${ProjectName}-${EnvironmentName}-LB
       Subnets: !Ref Subnets
       SecurityGroups:
         - !Ref SecurityGroup
       Tags:
-        - Key: Name
+        - Key: Environment
           Value: !Ref EnvironmentName
+        - Key: Managed by
+          Value: CloudFormation and DevOps at Burrows
+        - Key: Name
+          Value: !Ref ProjectName
 
   LoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref LoadBalancer
-      Port: 80
+      Port: !Ref PortExpose
       Protocol: HTTP
       DefaultActions:
         - Type: forward
@@ -47,9 +62,9 @@ Resources:
   DefaultTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub ${EnvironmentName}-default
+      Name: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}-default
       VpcId: !Ref VPC
-      Port: 80
+      Port: !Ref PortExpose
       Protocol: HTTP
 
 Outputs:
