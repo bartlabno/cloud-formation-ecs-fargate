@@ -1,0 +1,14 @@
+--- 
+- hosts: localhost
+  connection: local
+  remote_user: ansible_user
+  gather_facts: False
+  vars_files:
+    - ./vars/{{ project_name }}/defaults/main.yaml
+    - ./vars/{{ project_name }}/{{ application_name }}/defaults/main.yaml
+    - ./vars/{{ project_name }}/{{ application_name }}/{{ project_env }}/main.yaml
+  roles:
+    - ecs-fargate
+  #  - route53
+    # - security-groups
+    # - services

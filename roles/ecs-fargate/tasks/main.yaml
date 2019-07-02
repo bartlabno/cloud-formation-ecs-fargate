@@ -1,0 +1,25 @@
+---
+- name: ecs manager
+  local_action:
+    aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+    aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    module: cloudformation
+    disable_rollback: true
+    stack_name: "{{ project_name }}-{{ project_env }}-ecs-ansible-managed"
+    state: "{{ state }}"
+    region: "{{ project_region }}"
+    template_body: "{{ lookup('template', 'ecs-fargate.yaml.j2') }}"
+    template_parameters:
+        ProjectName: "{{ project_name }}"
+        EnvironmentName: "{{ project_env }}"
+        VPC: "vpc-67bbdc0f"
+        PortExpose: "5000"
+        AllowedIp: "217.38.24.50/32"
+        ApplicationName: "{{ application_name }}"
+        RootDomain: "{{ root_domain }}"
+        BranchName: "jenkinsfile"
+        BuildNumber: "14"
+        Subnets: "subnet-ef902595, subnet-e357afaf"
+    tags: 
+        Stack: "{{ project_name }}-{{ project_env }}-ecs-ansible"
+        Managed by: Managed by Ansible
