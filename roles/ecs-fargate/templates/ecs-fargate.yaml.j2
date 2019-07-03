@@ -37,7 +37,7 @@ Parameters:
 
   Subnets:
     Description: Choose which subnets the Application Load Balancer should be deployed to
-    Type: {% if create_vpc %}List<AWS::EC2::Subnet::Id>{% else %}CommaDelimitedList{% endif %}
+    Type: {% if create_vpc %}List<AWS::EC2::Subnet::Id>{% else %}String{% endif %}
 
   # SecurityGroup:
   #   Description: Select the Security Group to apply to the Application Load Balancer
@@ -53,9 +53,10 @@ Parameters:
     Type: Number
     Default: 80
 
-  # Listener:
-  #   Description: The Application Load Balancer listener to register with
-  #   Type: String
+  Priority:
+    Description: The Application Load Balancer listener to register with
+    Type: Number
+    Default: 1
 
   Ttl:
     Description: Time-to-live TTL
@@ -132,13 +133,22 @@ Resources:
     DependsOn: ListenerRule
     Properties:
       Cluster: !Ref Cluster
-      Role: !Ref ServiceRole
+      ServiceName: !Ref ApplicationName
       DesiredCount: !Ref DesiredCount
       TaskDefinition: !Ref TaskDefinition
       LoadBalancers:
         - ContainerName: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
           ContainerPort: !Ref PortExpose
           TargetGroupArn: !Ref TargetGroup
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Split
+            - ","
+            - !Ref Subnets
+          SecurityGroups:
+            - !Ref FargateSecurityGroup
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -147,8 +157,11 @@ Resources:
       Memory: !Ref MemoryLimit
       Cpu: !Ref CpuLimit
       NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
       ContainerDefinitions:
-        - Name: !Ref ApplicationName
+        - Name: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
           Essential: true
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-${ApplicationName}:${BranchName}-${BuildNumber}
           PortMappings:
@@ -173,7 +186,9 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: !Sub ${ProjectName}-${EnvironmentName}-LB
-      Subnets: !Ref Subnets
+      Subnets: !Split
+        - ","
+        - !Ref Subnets
       SecurityGroups:
         - !Ref LoadBalancerSecurityGroup
       Tags:
@@ -201,6 +216,12 @@ Resources:
       VpcId: !Ref VPC
       Port: !Ref PortExpose
       Protocol: HTTP
+      TargetType: ip
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
 
 # Load balancers target group and listener
   TargetGroup:
@@ -209,6 +230,7 @@ Resources:
       VpcId: !Ref VPC
       Port: !Ref PortExpose
       Protocol: HTTP
+      TargetType: ip
       Matcher:
         HttpCode: 200-299
       HealthCheckIntervalSeconds: 10
@@ -221,6 +243,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn: !Ref Listener
+      Priority: !Ref Priority
       Conditions:
         - Field: host-header
           Values:
@@ -242,6 +265,33 @@ Resources:
         - !Sub ${LoadBalancer.DNSName}
 
   # Access to register/unregister service with ALB.
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                # Allow the ECS Tasks to download images from ECR
+                - 'ecr:GetAuthorizationToken'
+                - 'ecr:BatchCheckLayerAvailability'
+                - 'ecr:GetDownloadUrlForLayer'
+                - 'ecr:BatchGetImage'
+
+                # Allow the ECS tasks to upload logs to CloudWatch
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: '*'
+
   ServiceRole:
     Type: AWS::IAM::Role
     Properties:

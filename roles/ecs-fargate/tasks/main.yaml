@@ -19,7 +19,7 @@
         RootDomain: "{{ root_domain }}"
         BranchName: "jenkinsfile"
         BuildNumber: "14"
-        Subnets: "subnet-ef902595, subnet-e357afaf"
+        Subnets: "subnet-ef902595,subnet-e357afaf"
     tags: 
         Stack: "{{ project_name }}-{{ project_env }}-ecs-ansible"
         Managed by: Managed by Ansible
