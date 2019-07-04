@@ -175,19 +175,29 @@ Resources:
               awslogs-stream-prefix: !Ref ApplicationName
 {% if (env_vars is defined or secret_vars is defined) %}
           Environment:
-{%  if env_vars is defined %}
+{% if app_type == 'dotnet' %}
+            - Name: "ASPNETCORE_URLS"
+              Value: "http://+:{{ port_expose }}"
+{% endif %}
+{% if env_vars is defined %}
 {% for envs in env_vars %}
-            - Name: "{{ envs.name }}"
-              Value: "{{ envs.value }}"
+            - Name: "{{ envs.Name }}"
+              Value: "{{ envs.Value }}"
 {% endfor %}
 {% endif %}
-{%  if secret_vars_sdsdsdssd is defined %}
+{% if project_env[current_env].env_vars is defined %}
+{% for envs in project_env[current_env].env_vars %}
+            - Name: "{{ envs.Name }}"
+              Value: "{{ envs.Value }}"
+{% endfor %}
+{% endif %}
+{%  if due_to_anislbe_error_not_working_secret_vars is defined %}
+https://github.com/ansible/ansible/issues/54790#issuecomment-508461914
 {% for secrets in env_vars %}
-            - {{ secrets }}={{ lookup('aws_secret', '"/" + project_name + "/" + project_env + "/" + application_name + "/" + secrets', aws_region='eu-west-2') }}
+            - {{ secrets }}={{ lookup('aws_secret', '"/" + project_name + "/" + current_env + "/" + application_name + "/" + secrets', region='eu-west-2') }}
 {% endfor %}
 {% endif %}
 {% endif %}
-
 
 # Cloudwatch logging group
   CloudWatchLogsGroup:
