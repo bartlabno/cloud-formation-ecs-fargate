@@ -18,7 +18,7 @@
         ApplicationName: "{{ application_name }}"
         RootDomain: "{{ root_domain }}"
         BranchName: "jenkinsfile"
-        BuildNumber: "14"
+        BuildNumber: "30"
         Subnets: "subnet-ef902595,subnet-e357afaf"
     tags: 
         Stack: "{{ project_name }}-{{ project_env }}-ecs-ansible"

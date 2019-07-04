@@ -1,1 +1,11 @@
 create_vpc: false
+project_region: eu-west-2
+env_vars:
+  - name: AWS_DEFAULT_OUTPUT
+    value: json
+  - name: AWS_DEFAULT_REGION
+    value: eu-west-2
+secret_vars:
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_ACCESS_KEY
+  - Cobra__MariaDbConnectionString

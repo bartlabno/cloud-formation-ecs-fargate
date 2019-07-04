@@ -173,6 +173,21 @@ Resources:
               awslogs-group: !Sub ${ProjectName}-${EnvironmentName}
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Ref ApplicationName
+{% if (env_vars is defined or secret_vars is defined) %}
+          Environment:
+{%  if env_vars is defined %}
+{% for envs in env_vars %}
+            - Name: "{{ envs.name }}"
+              Value: "{{ envs.value }}"
+{% endfor %}
+{% endif %}
+{%  if secret_vars_sdsdsdssd is defined %}
+{% for secrets in env_vars %}
+            - {{ secrets }}={{ lookup('aws_secret', '"/" + project_name + "/" + project_env + "/" + application_name + "/" + secrets', aws_region='eu-west-2') }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
 
 # Cloudwatch logging group
   CloudWatchLogsGroup:
