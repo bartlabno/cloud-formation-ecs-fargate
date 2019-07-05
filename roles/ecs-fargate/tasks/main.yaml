@@ -7,15 +7,15 @@
 - name: check default subnets if not defined
   shell: aws ec2 describe-subnets --region eu-west-2 --filters Name=default-for-az,Values=true Name=vpc-id,Values="{{ default_vpc.stdout }}" --output text --query Subnets[].SubnetId | tr "\\t" ", "
   register: subnets
-  when: use_subnet is not defined
+  when: use_subnets is not defined
 
 - name: set default vpc if not defined
   set_fact: use_vpc="{{ default_vpc.stdout }}"
   when: use_vpc is not defined
 
 - name: set default subnet if not defined
-  set_fact: use_subnet="{{ subnets.stdout }}"
-  when: use_subnet is not defined
+  set_fact: use_subnets="{{ subnets.stdout }}"
+  when: use_subnets is not defined
 
 - name: ecs manager
   local_action:
