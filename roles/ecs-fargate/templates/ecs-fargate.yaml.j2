@@ -186,9 +186,9 @@ Resources:
 {% endfor %}
 {% endif %}
 {% if project_env[current_env].env_vars is defined %}
-{% for envs in project_env[current_env].env_vars %}
-            - Name: "{{ envs.Name }}"
-              Value: "{{ envs.Value }}"
+{% for cur_envs in project_env[current_env].env_vars %}
+            - Name: "{{ cur_envs.Name }}"
+              Value: "{{ cur_envs.Value }}"
 {% endfor %}
 {% endif %}
 {%  if due_to_anislbe_error_not_working_secret_vars is defined %}
