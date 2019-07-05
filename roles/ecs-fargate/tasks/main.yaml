@@ -45,6 +45,11 @@
         RootDomain: "{{ root_domain }}"
         BranchName: "{{ branch_name }}"
         BuildNumber: "{{ build_number }}"
+        ExistHostedZone: "{{ hosted_zone }}"
+        CpuLimit: "{{ cpu_limit }}"
+        MemLimit: "{{ mem_limit }}"
+        DesiredCount: "{{ desired_count }}"
+        HealthCheckPath: "{{ health_check }}"
     tags: 
         Stack: "{{ project_name }}-{{ current_env }}-ecs-ansible"
         Managed by: Managed by Ansible

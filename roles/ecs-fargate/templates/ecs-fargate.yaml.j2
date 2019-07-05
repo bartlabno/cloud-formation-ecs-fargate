@@ -39,10 +39,6 @@ Parameters:
     Description: Choose which subnets the Application Load Balancer should be deployed to
     Type: {% if create_vpc %}List<AWS::EC2::Subnet::Id>{% else %}String{% endif %}
 
-  # SecurityGroup:
-  #   Description: Select the Security Group to apply to the Application Load Balancer
-  #   Type: AWS::EC2::SecurityGroup::Id
-
   AllowedIp:
     Description: Allowed IP ranged to access Load Balancer Secuirty Group
     Type: String
@@ -87,6 +83,11 @@ Parameters:
     Description: Cpu Limit
     Type: Number
     Default: 256
+  
+  ExistHostedZone
+    Description: Use existing HostedZone
+    Type: String
+    Default: x
   
 Resources:
 # Route 53 hosted zone configuration
@@ -281,7 +282,7 @@ Resources:
   RecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId: !Ref HostedZone
+      HostedZoneId: {% if hosted_zone is defined %}!Ref ExistHostedZone{% else %}!Ref HostedZone{% endif %}
       Comment: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
       Name: !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}.
       Type: CNAME
