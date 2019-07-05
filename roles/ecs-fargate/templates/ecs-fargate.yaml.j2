@@ -191,10 +191,10 @@ Resources:
               Value: "{{ cur_envs.Value }}"
 {% endfor %}
 {% endif %}
-{%  if due_to_anislbe_error_not_working_secret_vars is defined %}
-https://github.com/ansible/ansible/issues/54790#issuecomment-508461914
-{% for secrets in env_vars %}
-            - {{ secrets }}={{ lookup('aws_secret', '"/" + project_name + "/" + current_env + "/" + application_name + "/" + secrets', region='eu-west-2') }}
+{% if secret_vars is defined %}
+{% for secrets in secret_result.results %}
+            - Name: "{{ secrets.item }}"
+              Value: "{{ secrets.stdout }}"
 {% endfor %}
 {% endif %}
 {% endif %}
