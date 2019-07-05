@@ -28,10 +28,10 @@ env_vars:
     Value: json
   - Name: AWS_DEFAULT_REGION
     Value: eu-west-2
-secret_vars:
-  - AWS_ACCESS_KEY_ID
-  - AWS_SECRET_ACCESS_KEY
-  - Cobra__MariaDbConnectionString
+    #secret_vars:
+    #- AWS_ACCESS_KEY_ID
+    #- AWS_SECRET_ACCESS_KEY
+    #- Cobra__MariaDbConnectionString
 
 # Additional AWS options:
 # AWS region to deploy (default: eu-west-1)
