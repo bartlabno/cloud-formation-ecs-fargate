@@ -47,7 +47,7 @@
         BuildNumber: "{{ build_number }}"
         ExistHostedZone: "{{ hosted_zone }}"
         CpuLimit: "{{ cpu_limit }}"
-        MemLimit: "{{ mem_limit }}"
+        MemoryLimit: "{{ mem_limit }}"
         DesiredCount: "{{ desired_count }}"
         HealthCheckPath: "{{ health_check }}"
     tags: 
