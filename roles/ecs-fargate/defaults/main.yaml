@@ -8,3 +8,4 @@ health_check: "/health"
 cpu_limit: 256
 mem_limit: 512
 desired_count: 1
+use_hosted_zone: false
