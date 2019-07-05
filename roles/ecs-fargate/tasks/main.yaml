@@ -17,6 +17,13 @@
   set_fact: use_subnets="{{ subnets.stdout }}"
   when: use_subnets is not defined
 
+- name: secrets workaround
+  shell: aws secretsmanager get-secret-value --secret-id /{{ project_name }}/{{ current_env }}/{{ application_name }}/{{ item }} --output text --query SecretString
+  when: secret_vars is defined
+  with_items: "{{ secret_vars }}"
+  register: secret_result
+  no_log: True
+
 - name: ecs manager
   local_action:
     module: cloudformation
