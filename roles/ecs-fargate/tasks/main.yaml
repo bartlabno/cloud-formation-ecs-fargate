@@ -31,7 +31,7 @@
 - name: ecs manager
   local_action:
     module: cloudformation
-    aws_profile: "{{ current_env }}"
+    profile: "{{ current_env }}"
     disable_rollback: true
     stack_name: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ansible-managed"
     state: "{{ state }}"
