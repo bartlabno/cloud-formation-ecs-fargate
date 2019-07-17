@@ -1,4 +1,8 @@
 ---
+- name: define project region if specific
+  set_fact: project_region="{{ project_env[current_env].project_region }}"
+  when: project_env[current_env].project_region is defined
+
 - name: check default vpc if not defined
   command: aws ec2 describe-vpcs --region "{{ project_region }}" --filters Name=isDefault,Values=true --output text --query Vpcs[].VpcId
   register: default_vpc
@@ -45,6 +49,7 @@
         RootDomain: "{{ root_domain }}"
         BranchName: "{{ branch_name }}"
         BuildNumber: "{{ build_number }}"
+        RootAccount: "{{ root_account }}"
         ExistHostedZone: "{{ hosted_zone }}"
         CpuLimit: "{{ cpu_limit }}"
         MemoryLimit: "{{ mem_limit }}"
