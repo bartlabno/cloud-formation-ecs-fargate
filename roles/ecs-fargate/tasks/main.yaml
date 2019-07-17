@@ -1,11 +1,15 @@
 ---
+- name: define project region if specific
+  set_fact: project_region="{{ project_env[current_env].project_region }}"
+  when: project_env[current_env].project_region is defined
+
 - name: check default vpc if not defined
-  command: aws ec2 describe-vpcs --region "{{ project_env[current_env].project_region }}" --filters Name=isDefault,Values=true --output text --query Vpcs[].VpcId
+  command: aws ec2 describe-vpcs --region "{{ project_region }}" --filters Name=isDefault,Values=true --output text --query Vpcs[].VpcId
   register: default_vpc
   when: use_vpc is not defined
 
 - name: check default subnets if not defined
-  shell: aws ec2 describe-subnets --region "{{ project_env[current_env].project_region }}" --filters Name=default-for-az,Values=true Name=vpc-id,Values="{{ default_vpc.stdout }}" --output text --query Subnets[].SubnetId | tr "\\t" ", "
+  shell: aws ec2 describe-subnets --region "{{ project_region }}" --filters Name=default-for-az,Values=true Name=vpc-id,Values="{{ default_vpc.stdout }}" --output text --query Subnets[].SubnetId | tr "\\t" ", "
   register: subnets
   when: use_subnets is not defined
 
@@ -32,7 +36,7 @@
     disable_rollback: true
     stack_name: "{{ project_name }}-{{ current_env }}-ecs-ansible-managed"
     state: "{{ state }}"
-    region: "{{ project_env[current_env].project_region }}"
+    region: "{{ project_region }}"
     template_body: "{{ lookup('template', 'ecs-fargate.yaml.j2') }}"
     template_parameters:
         ProjectName: "{{ project_name }}"
