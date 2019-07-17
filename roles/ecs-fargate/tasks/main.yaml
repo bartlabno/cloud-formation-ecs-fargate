@@ -34,7 +34,7 @@
     aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
     aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
     disable_rollback: true
-    stack_name: "{{ project_name }}-{{ current_env }}-ecs-ansible-managed"
+    stack_name: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ansible-managed"
     state: "{{ state }}"
     region: "{{ project_region }}"
     template_body: "{{ lookup('template', 'ecs-fargate.yaml.j2') }}"
