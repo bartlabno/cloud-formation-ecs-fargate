@@ -33,7 +33,7 @@
     module: cloudformation
     profile: "{{ current_env }}"
     disable_rollback: true
-    stack_name: "{{ project_name }}-{{ current_env }}-ecs-ansible-managed"
+    stack_name: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ansible-managed"
     state: "{{ state }}"
     region: "{{ project_region }}"
     template_body: "{{ lookup('template', 'ecs-fargate.yaml.j2') }}"
