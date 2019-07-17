@@ -1,7 +1,7 @@
 create_vpc: false
 port_expose: 80
-root_domain: "burrows-cloud.com"
-hosted_zone: "ZIM8ZVHCGKKCA"
+root_domain: "example.com"
+hosted_zone: "XYZ"
 ttl: 300
 state: present
 health_check: "/health"
@@ -9,3 +9,4 @@ cpu_limit: 256
 mem_limit: 512
 desired_count: 1
 use_hosted_zone: true
+root_account: 0

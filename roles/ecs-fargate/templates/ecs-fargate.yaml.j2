@@ -84,11 +84,19 @@ Parameters:
     Type: Number
     Default: 256
 
+{% if hosted_zone is defined %}
   ExistHostedZone:
     Description: Use existing HostedZone
     Type: String
     Default: ID
+{% endif %}
   
+{% if root_account is defined %}
+  RootAccount:
+    Description: AWS root account number hosting shared resources
+    Type: Number
+{% endif %}
+
 Resources:
 # Route 53 hosted zone configuration
   HostedZone:
@@ -134,7 +142,7 @@ Resources:
     DependsOn: ListenerRule
     Properties:
       Cluster: !Ref Cluster
-      ServiceName: !Ref ApplicationName
+      ServiceName: !Sub ${ApplicationName}-${EnvironmentName}
       DesiredCount: !Ref DesiredCount
       TaskDefinition: !Ref TaskDefinition
       LoadBalancers:
@@ -154,7 +162,7 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Ref ApplicationName
+      Family: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
       Memory: !Ref MemoryLimit
       Cpu: !Ref CpuLimit
       NetworkMode: awsvpc
@@ -164,14 +172,14 @@ Resources:
       ContainerDefinitions:
         - Name: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
           Essential: true
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-${ApplicationName}:${BranchName}-${BuildNumber}
+          Image: !Sub {% if root_account is defined %}${RootAccount}{% else %}${AWS::AccountId}{% endif %}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-${ApplicationName}:${BranchName}-${BuildNumber}
           PortMappings:
             - ContainerPort: !Ref PortExpose
               HostPort: !Ref PortExpose
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub ${ProjectName}-${EnvironmentName}
+              awslogs-group: !Sub ${ProjectName}/${EnvironmentName}/${ApplicationName}
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Ref ApplicationName
 {% if (env_vars is defined or secret_vars is defined) %}
@@ -204,7 +212,7 @@ Resources:
   CloudWatchLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub ${ProjectName}-${EnvironmentName}
+      LogGroupName: !Sub ${ProjectName}/${EnvironmentName}/${ApplicationName}
       RetentionInDays: 365
 
 # Load balancer default configuration
@@ -284,7 +292,7 @@ Resources:
     Properties:
       HostedZoneId: !Ref {% if use_hosted_zone %}ExistHostedZone{% else %}HostedZone
       {% endif %}
-      
+
       Comment: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
       Name: !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}.
       Type: CNAME
