@@ -1,7 +1,7 @@
 ---
 # Provice project and application name and type (all mandatory):
-project_name: cobra
-application_name: job-monitoring
+project_name: project
+application_name: application
 project_env: 
   sandbox:
 # Deploy to environment true or false
@@ -9,7 +9,7 @@ project_env:
   dev:
     deploy: true
 # IP range to expose your application. By default available to world (AllowedIp: 0.0.0.0/0)
-    allowed_ip: "217.38.24.50/32"
+    allowed_ip: "1.2.3.4/32"
 # Additonal container variables per environment only
     env_vars:
       - Name: dev_specific_var
@@ -28,25 +28,24 @@ env_vars:
     Value: json
   - Name: AWS_DEFAULT_REGION
     Value: eu-west-2
-    #secret_vars:
-    #- AWS_ACCESS_KEY_ID
-    #- AWS_SECRET_ACCESS_KEY
-    #- Cobra__MariaDbConnectionString
+secret_vars:
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
 
 # Additional AWS options:
 # AWS region to deploy (default: eu-west-1)
-project_region: eu-west-2
+project_region: eu-west-1
 # AWS to create additional VPC for your environment (not supported yet)
 create_vpc: false
 # VPC to deploy your application if create_vpc is false. If variable not defined will deploy to default VPC
-use_vpc: "vpc-67bbdc0f"
+use_vpc: "vpc-123456"
 # Subnets to deploy your application if create_vpc is false. If use_vpc not defined will deploy to default subnets
-use_subnets: "subnet-ef902595, subnet-e357afaf"
+use_subnets: "subnet-ab123456, subnet-cd123456"
 
 # Additional network options:
 # Container port to exposed. All your application services must run on different ports. (default: 80)
-port_expose: 5000
+port_expose: 3999
 # Route 53 root domain to build your application (default: example.com)
-root_domain: "burrows-cloud.com"
+root_domain: "example-cloud.com"
 # Time to live, how fast your changes will be applied to route53 (default: 300)
 ttl: 60
