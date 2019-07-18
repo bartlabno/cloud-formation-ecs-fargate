@@ -54,9 +54,13 @@
         Managed by: Managed by Ansible
   register: core_outputs
 
+- cloudformation_facts:
+    stack_name: "{{ project_name }}-{{ current_env }}-ansible-managed"
+  register: cloud_123
+
 - debug:
-    # msg: "{{ item.logical_resource_id }} is {{ item.physical_resource_id }}"
-    msg: "{{ core_outputs.stack_resources }}"
+    msg: "{{ cloud_123 }}"
+#   with_dict: "{{ core_outputs.stack_resources }}"
 
 - name: service fargate stack
   local_action:
