@@ -59,7 +59,7 @@
   register: cloud_123
 
 - debug:
-    msg: "{{ cloud_123 }}"
+    msg: "{{ core_outputs }}"
 #   with_dict: "{{ core_outputs.stack_resources }}"
 
 - name: service fargate stack
