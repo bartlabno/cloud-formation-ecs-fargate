@@ -67,6 +67,7 @@
         LoadBalancer: "{{ core_outputs.stack_outputs.LoadBalancer }}"
         FargateSecurityGroup: "{{ core_outputs.stack_outputs.FargateSecurityGroup }}"
         ECSTaskExecutionRole: "{{ core_outputs.stack_outputs.ECSTaskExecutionRole }}"
+        Cluster: "{{ core_outputs.stack_outputs.Cluster }}"
         ProjectName: "{{ project_name }}"
         EnvironmentName: "{{ current_env }}"
         VPC: "{{ use_vpc }}"
