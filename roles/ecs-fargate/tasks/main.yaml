@@ -52,7 +52,7 @@
     tags: 
         Stack: "{{ project_name }}-{{ current_env }}-ansible"
         Managed by: Managed by Ansible
-    register: core_outputs
+  register: core_outputs
 
 - name: service fargate stack
   local_action:
