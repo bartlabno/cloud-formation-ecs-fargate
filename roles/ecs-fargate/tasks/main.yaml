@@ -59,8 +59,8 @@
   register: cloud_123
 
 - debug:
-    msg: "{{ core_outputs }}"
-#   with_dict: "{{ core_outputs.stack_resources }}"
+    msg: "{{ item.ECSTaskExecutionRole }} and {{ item.LoadBalancer }}"
+  with_dict: "{{ core_outputs.stack_outputs }}"
 
 - name: service fargate stack
   local_action:
