@@ -54,10 +54,6 @@
         Managed by: Managed by Ansible
   register: core_outputs
 
-- cloudformation_facts:
-    stack_name: "{{ project_name }}-{{ current_env }}-ansible-managed"
-    register: cloud_123
-
 - debug:
     msg: "{{ core_outputs.stack_outputs.ECSTaskExecutionRole }}"
 
