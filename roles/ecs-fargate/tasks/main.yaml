@@ -55,7 +55,8 @@
   register: core_outputs
 
 - debug:
-    msg: "{{ core_outputs }}"
+    msg: "{{ item.logical_resource_id }} is {{ item.physical_resource_id }}"
+  with_dict: "{{ core_outputs.stack_resources }}"
 
 - name: service fargate stack
   local_action:
@@ -89,3 +90,4 @@
     tags: 
         Stack: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ecs-ansible"
         Managed by: Managed by Ansible
+  loop: "{{ lookup('dict', core_outputs) }}"
