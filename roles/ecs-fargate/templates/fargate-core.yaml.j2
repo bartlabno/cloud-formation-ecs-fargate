@@ -94,7 +94,7 @@ Resources:
       VpcId: !Ref VPC
       GroupDescription: Access to the load balancer that sits in front of ECS
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        - IpProtocol: -1
           CidrIp: !Ref AllowedIp
       Tags:
         - Key: Name
