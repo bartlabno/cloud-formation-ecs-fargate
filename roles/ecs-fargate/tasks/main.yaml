@@ -86,4 +86,3 @@
     tags: 
         Stack: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ecs-ansible"
         Managed by: Managed by Ansible
-  loop: "{{ lookup('dict', core_outputs) }}"
