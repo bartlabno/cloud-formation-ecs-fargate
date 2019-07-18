@@ -28,7 +28,33 @@
   register: secret_result
   no_log: True
 
-- name: ecs manager
+- name: core fargate stack
+  local_action:
+    module: cloudformation
+    profile: "{{ current_env }}"
+    disable_rollback: true
+    stack_name: "{{ project_name }}-{{ current_env }}-ansible-managed"
+    state: "{{ state }}"
+    region: "{{ project_region }}"
+    template_body: "{{ lookup('template', 'fargate-core.yaml.j2') }}"
+    template_parameters:
+        ProjectName: "{{ project_name }}"
+        EnvironmentName: "{{ current_env }}"
+        VPC: "{{ use_vpc }}"
+        Subnets: "{{ use_subnets }}"
+        AllowedIp: "{{ project_env[current_env].allowed_ip }}"
+        RootDomain: "{{ root_domain }}"
+        RootAccount: "{{ root_account }}"
+        ExistHostedZone: "{{ hosted_zone }}"
+        CpuLimit: "{{ cpu_limit }}"
+        MemoryLimit: "{{ mem_limit }}"
+        DesiredCount: "{{ desired_count }}"
+    tags: 
+        Stack: "{{ project_name }}-{{ current_env }}-ansible"
+        Managed by: Managed by Ansible
+    register: core_outputs
+
+- name: service fargate stack
   local_action:
     module: cloudformation
     profile: "{{ current_env }}"
@@ -36,8 +62,11 @@
     stack_name: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ansible-managed"
     state: "{{ state }}"
     region: "{{ project_region }}"
-    template_body: "{{ lookup('template', 'ecs-fargate.yaml.j2') }}"
+    template_body: "{{ lookup('template', 'fargate-services.yaml.j2') }}"
     template_parameters:
+        LoadBalancer: "{{ core_outputs.LoadBalancer }}"
+        FargateSecurityGroup: "{{ core_outputs.FargateSecurityGroup }}"
+        ECSTaskExecutionRole: "{{ core_outputs.ECSTaskExecutionRole }}"
         ProjectName: "{{ project_name }}"
         EnvironmentName: "{{ current_env }}"
         VPC: "{{ use_vpc }}"
@@ -55,5 +84,5 @@
         DesiredCount: "{{ desired_count }}"
         HealthCheckPath: "{{ health_check }}"
     tags: 
-        Stack: "{{ project_name }}-{{ current_env }}-ecs-ansible"
+        Stack: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ecs-ansible"
         Managed by: Managed by Ansible

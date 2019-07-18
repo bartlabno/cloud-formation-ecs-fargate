@@ -1,0 +1,268 @@
+Description: >
+  Fargate Service template to manage specific per application services like fargate service,
+  listeners, dns records, task definitions or security groups
+
+Parameters:
+# Basic application params like project name, env or build number
+  ProjectName:
+    Description: Project Name
+    Type: String
+
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    AllowedValues:
+      - sandbox
+      - dev
+      - uat
+      - staging
+      - prod
+
+  ApplicationName:
+    Description: Application name
+    Type: String
+
+  BranchName:
+    Description: Current name of git branch
+    Type: String
+
+  BuildNumber:
+    Description: Jenkins build Number
+    Type: String
+
+# Network related variables
+  VPC:
+    Description: Choose which VPC the security groups should be deployed to
+    Type: {% if create_vpc %}AWS::EC2::VPC::Id{% else %}String{% endif %}
+
+  Subnets:
+    Description: Choose which subnets the Application Load Balancer should be deployed to
+    Type: {% if create_vpc %}List<AWS::EC2::Subnet::Id>{% else %}String{% endif %}
+
+  AllowedIp:
+    Description: Allowed IP ranged to access Load Balancer Secuirty Group
+    Type: String
+    Default: 0.0.0.0/0
+  
+  PortExpose:
+    Description: Port to be exposed
+    Type: Number
+    Default: 80
+
+  Priority:
+    Description: The Application Load Balancer listener to register with
+    Type: Number
+    Default: 1
+
+  Ttl:
+    Description: Time-to-live TTL
+    Type: Number
+    Default: 300
+  
+  RootDomain:
+    Description: Root domain to be used for this Project
+    Type: String
+
+# Service and task related variables
+  DesiredCount:
+    Description: How many instances of this task should we run across our cluster?
+    Type: Number
+    Default: 1
+
+  HealthCheckPath:
+    Description: Healthcheck path for Application Load Balancer
+    Type: String
+    Default: /health
+
+  MemoryLimit:
+    Description: Memory Limit for Container
+    Type: Number
+    Default: 512
+
+  CpuLimit:
+    Description: Cpu Limit
+    Type: Number
+    Default: 256
+
+{% if hosted_zone is defined %}
+  ExistHostedZone:
+    Description: Use existing HostedZone
+    Type: String
+    Default: ID
+{% endif %}
+  
+{% if root_account is defined %}
+  RootAccount:
+    Description: AWS root account number hosting shared resources
+    Type: Number
+{% endif %}
+
+  LoadBalancer:
+    Description: LB details
+    Type: String
+
+  FargateSecurityGroup:
+    Description: FargateSecurityGroup
+    Type: String
+  
+  ECSTaskExecutionRole:
+    Description: ECSTaskExecutionRole
+    Type: String
+
+Resources:
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Access to the load balancer that sits in front of ECS
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: !Ref AllowedIp
+          FromPort: !Ref PortExpose
+          ToPort: !Ref PortExpose
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${EnvironmentName}-LoadBalancers
+
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn: ListenerRule
+    Properties:
+      Cluster: !Ref Cluster
+      ServiceName: !Sub ${ApplicationName}-${EnvironmentName}
+      DesiredCount: !Ref DesiredCount
+      TaskDefinition: !Ref TaskDefinition
+      LoadBalancers:
+        - ContainerName: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
+          ContainerPort: !Ref PortExpose
+          TargetGroupArn: !Ref TargetGroup
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Split
+            - ","
+            - !Ref Subnets
+          SecurityGroups:
+            - !Ref FargateSecurityGroup
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
+      Memory: !Ref MemoryLimit
+      Cpu: !Ref CpuLimit
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      ContainerDefinitions:
+        - Name: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
+          Essential: true
+          Image: !Sub {% if root_account is defined %}${RootAccount}{% else %}${AWS::AccountId}{% endif %}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-${ApplicationName}:${BranchName}-${BuildNumber}
+          PortMappings:
+            - ContainerPort: !Ref PortExpose
+              HostPort: !Ref PortExpose
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub ${ProjectName}/${EnvironmentName}/${ApplicationName}
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: !Ref ApplicationName
+{% if (env_vars is defined or secret_vars is defined) %}
+          Environment:
+{% if app_type == 'dotnet' %}
+            - Name: "ASPNETCORE_URLS"
+              Value: "http://+:{{ port_expose }}"
+{% endif %}
+{% if env_vars is defined %}
+{% for envs in env_vars %}
+            - Name: "{{ envs.Name }}"
+              Value: "{{ envs.Value }}"
+{% endfor %}
+{% endif %}
+{% if project_env[current_env].env_vars is defined %}
+{% for cur_envs in project_env[current_env].env_vars %}
+            - Name: "{{ cur_envs.Name }}"
+              Value: "{{ cur_envs.Value }}"
+{% endfor %}
+{% endif %}
+{% if secret_vars is defined %}
+{% for secrets in secret_result.results %}
+            - Name: "{{ secrets.item }}"
+              Value: "{{ secrets.stdout }}"
+{% endfor %}
+{% endif %}
+{% endif %}
+
+# Load balancers target group and listener
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VPC
+      Port: !Ref PortExpose
+      Protocol: HTTP
+      TargetType: ip
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+
+  DefaultTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}-default
+      VpcId: !Ref VPC
+      Port: !Ref PortExpose
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: !Ref PortExpose
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DefaultTargetGroup
+
+  ListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref Listener
+      Priority: !Ref Priority
+      Conditions:
+        - Field: host-header
+          Values:
+            - !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}
+      Actions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+
+# Route 53 dns record
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref {% if use_hosted_zone %}ExistHostedZone{% else %}HostedZone
+      {% endif %}
+
+      Comment: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
+      Name: !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}.
+      Type: CNAME
+      TTL: !Ref Ttl
+      ResourceRecords: 
+        - !Sub ${LoadBalancer.DNSName}
+
+Outputs:
+  Domain:
+    Description: Domain
+    Value: !Ref RecordSet

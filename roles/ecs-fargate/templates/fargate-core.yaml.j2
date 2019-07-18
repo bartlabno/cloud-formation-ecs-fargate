@@ -1,0 +1,212 @@
+Description: >
+  Fargate Core template to manage core stack services including shared loadbalancers, 
+  ecs cluster, hosted zones, vpc or security groups
+
+Parameters:
+# Basic application params like project name, env or build number
+  ProjectName:
+    Description: Project Name
+    Type: String
+
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    AllowedValues:
+      - sandbox
+      - dev
+      - uat
+      - staging
+      - prod
+
+# Network related variables
+  VPC:
+    Description: Choose which VPC the security groups should be deployed to
+    Type: {% if create_vpc %}AWS::EC2::VPC::Id{% else %}String{% endif %}
+
+  Subnets:
+    Description: Choose which subnets the Application Load Balancer should be deployed to
+    Type: {% if create_vpc %}List<AWS::EC2::Subnet::Id>{% else %}String{% endif %}
+
+  AllowedIp:
+    Description: Allowed IP ranged to access Load Balancer Secuirty Group
+    Type: String
+    Default: 0.0.0.0/0
+
+  Priority:
+    Description: The Application Load Balancer listener to register with
+    Type: Number
+    Default: 1
+
+  Ttl:
+    Description: Time-to-live TTL
+    Type: Number
+    Default: 300
+  
+  RootDomain:
+    Description: Root domain to be used for this Project
+    Type: String
+
+# Service and task related variables
+  DesiredCount:
+    Description: How many instances of this task should we run across our cluster?
+    Type: Number
+    Default: 1
+
+  HealthCheckPath:
+    Description: Healthcheck path for Application Load Balancer
+    Type: String
+    Default: /health
+
+  MemoryLimit:
+    Description: Memory Limit for Container
+    Type: Number
+    Default: 512
+
+  CpuLimit:
+    Description: Cpu Limit
+    Type: Number
+    Default: 256
+
+{% if hosted_zone is defined %}
+  ExistHostedZone:
+    Description: Use existing HostedZone
+    Type: String
+    Default: ID
+{% endif %}
+  
+{% if root_account is defined %}
+  RootAccount:
+    Description: AWS root account number hosting shared resources
+    Type: Number
+{% endif %}
+
+Resources:
+# Route 53 hosted zone configuration
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Sub ${EnvironmentName}.${ProjectName}.${RootDomain}.
+
+# Security groups for cluster and load balancers
+  FargateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Access to the ECS Fargate from ELB only
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          IpProtocol: -1
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${EnvironmentName}-ELB-ECS
+
+# Cluster creation, services providing
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${ProjectName}-${EnvironmentName}
+
+# Cloudwatch logging group
+  CloudWatchLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /${ProjectName}/${EnvironmentName}
+      RetentionInDays: 365
+
+# Load balancer default configuration
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${ProjectName}-${EnvironmentName}-LB
+      Subnets: !Split
+        - ","
+        - !Ref Subnets
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Managed by
+          Value: CloudFormation and DevOps at Burrows
+        - Key: Name
+          Value: !Ref ProjectName
+
+# Access to register/unregister service with ALB.
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                # Allow the ECS Tasks to download images from ECR
+                - 'ecr:GetAuthorizationToken'
+                - 'ecr:BatchCheckLayerAvailability'
+                - 'ecr:GetDownloadUrlForLayer'
+                - 'ecr:BatchGetImage'
+
+                # Allow the ECS tasks to upload logs to CloudWatch
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: '*'
+
+  ServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ecs-service-${AWS::StackName}
+      Path: /
+      AssumeRolePolicyDocument: |
+        {
+            "Statement": [{
+                "Effect": "Allow",
+                "Principal": { "Service": [ "ecs.amazonaws.com" ]},
+                "Action": [ "sts:AssumeRole" ]
+            }]
+        }
+      Policies:
+        - PolicyName: !Sub ecs-service-${AWS::StackName}
+          PolicyDocument:
+            {
+              "Version": "2012-10-17",
+              "Statement":
+                [
+                  {
+                    "Effect": "Allow",
+                    "Action":
+                      [
+                        "ec2:AuthorizeSecurityGroupIngress",
+                        "ec2:Describe*",
+                        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                        "elasticloadbalancing:Describe*",
+                        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                        "elasticloadbalancing:DeregisterTargets",
+                        "elasticloadbalancing:DescribeTargetGroups",
+                        "elasticloadbalancing:DescribeTargetHealth",
+                        "elasticloadbalancing:RegisterTargets",
+                      ],
+                    "Resource": "*",
+                  },
+                ],
+            }
+
+Outputs:
+  LoadBalancer:
+    Description: LB details
+    Value: !Ref LoadBalancer
+
+  FargateSecurityGroup:
+    Description: FargateSecurityGroup
+    Value: FargateSecurityGroup
+  
+  ECSTaskExecutionRole:
+    Description: ECSTaskExecutionRole
+    Value: ECSTaskExecutionRole
