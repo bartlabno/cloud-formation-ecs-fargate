@@ -88,6 +88,18 @@ Resources:
       Name: !Sub ${EnvironmentName}.${ProjectName}.${RootDomain}.
 
 # Security groups for cluster and load balancers
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Access to the load balancer that sits in front of ECS
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: !Ref AllowedIp
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${EnvironmentName}-LoadBalancers
+
   FargateSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:

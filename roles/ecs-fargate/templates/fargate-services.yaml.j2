@@ -110,20 +110,6 @@ Parameters:
     Type: String
 
 Resources:
-  LoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId: !Ref VPC
-      GroupDescription: Access to the load balancer that sits in front of ECS
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          CidrIp: !Ref AllowedIp
-          FromPort: !Ref PortExpose
-          ToPort: !Ref PortExpose
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${EnvironmentName}-LoadBalancers
-
   Service:
     Type: AWS::ECS::Service
     DependsOn: ListenerRule
