@@ -54,12 +54,6 @@
         Managed by: Managed by Ansible
   register: core_outputs
 
-- debug:
-    msg: "{{ core_outputs.stack_outputs.ECSTaskExecutionRole }}"
-
-- debug:
-    msg: "lookup({{ core_outputs.stack_outputs }}, {{ ECSTaskExecutionRole }}"
-
 - name: service fargate stack
   local_action:
     module: cloudformation
@@ -70,9 +64,9 @@
     region: "{{ project_region }}"
     template_body: "{{ lookup('template', 'fargate-services.yaml.j2') }}"
     template_parameters:
-        LoadBalancer: "{{ core_outputs.LoadBalancer }}"
-        FargateSecurityGroup: "{{ core_outputs.FargateSecurityGroup }}"
-        ECSTaskExecutionRole: "{{ core_outputs.ECSTaskExecutionRole }}"
+        LoadBalancer: "{{ core_outputs.stack_outputs.LoadBalancer }}"
+        FargateSecurityGroup: "{{ core_outputs.stack_outputs.FargateSecurityGroup }}"
+        ECSTaskExecutionRole: "{{ core_outputs.stack_outputs.ECSTaskExecutionRole }}"
         ProjectName: "{{ project_name }}"
         EnvironmentName: "{{ current_env }}"
         VPC: "{{ use_vpc }}"
