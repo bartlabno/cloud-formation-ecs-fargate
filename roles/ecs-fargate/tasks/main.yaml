@@ -65,6 +65,7 @@
     template_body: "{{ lookup('template', 'fargate-services.yaml.j2') }}"
     template_parameters:
         LoadBalancer: "{{ core_outputs.stack_outputs.LoadBalancer }}"
+        LoadBalancerDns: "{{ core_outputs.stack_outputs.LoadBalancerDns }}"
         FargateSecurityGroup: "{{ core_outputs.stack_outputs.FargateSecurityGroup }}"
         ECSTaskExecutionRole: "{{ core_outputs.stack_outputs.ECSTaskExecutionRole }}"
         Cluster: "{{ core_outputs.stack_outputs.Cluster }}"
