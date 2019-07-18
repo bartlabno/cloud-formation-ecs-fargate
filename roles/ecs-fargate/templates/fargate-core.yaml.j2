@@ -229,4 +229,4 @@ Outputs:
 
   LoadBalancerDns:
     Description: LB DNS Name
-    Value: !Ref LoadBalancer.DNSName
+    Value: !Sub ${LoadBalancer.DNSName}
