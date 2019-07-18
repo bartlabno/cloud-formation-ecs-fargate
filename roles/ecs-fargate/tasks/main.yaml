@@ -54,6 +54,9 @@
         Managed by: Managed by Ansible
   register: core_outputs
 
+- debug:
+    msg: "{{ core_outputs }}"
+
 - name: service fargate stack
   local_action:
     module: cloudformation
