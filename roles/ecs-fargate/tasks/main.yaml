@@ -55,8 +55,8 @@
   register: core_outputs
 
 - debug:
-    msg: "{{ item.logical_resource_id }} is {{ item.physical_resource_id }}"
-  with_dict: "{{ core_outputs.stack_resources }}"
+    # msg: "{{ item.logical_resource_id }} is {{ item.physical_resource_id }}"
+    msg: "{{ core_outputs.stack_resources }}"
 
 - name: service fargate stack
   local_action:
