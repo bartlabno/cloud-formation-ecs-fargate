@@ -160,7 +160,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub ${ProjectName}/${EnvironmentName}/${ApplicationName}
+              awslogs-group: !Sub /${ProjectName}/${EnvironmentName}
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Ref ApplicationName
 {% if (env_vars is defined or secret_vars is defined) %}
