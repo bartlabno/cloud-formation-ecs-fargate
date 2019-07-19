@@ -163,8 +163,9 @@ Resources:
               awslogs-group: !Sub /${ProjectName}/${EnvironmentName}
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Ref ApplicationName
-{% if ((env_vars is defined) or (secret_vars is defined) or (project_env[current_env].env_vars is defined)) %}
           Environment:
+            - Name: foo
+              Value: bar
 {% if app_type == 'dotnet' %}
             - Name: "ASPNETCORE_URLS"
               Value: "http://+:{{ port_expose }}"
@@ -187,7 +188,7 @@ Resources:
               Value: "{{ secrets.stdout }}"
 {% endfor %}
 {% endif %}
-{% endif %}
+
 
 # Load balancers target group and listener
   TargetGroup:
