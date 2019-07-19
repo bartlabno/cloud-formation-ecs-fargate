@@ -85,6 +85,7 @@
         MemoryLimit: "{{ mem_limit }}"
         DesiredCount: "{{ desired_count }}"
         HealthCheckPath: "{{ health_check }}"
+        Priority: "{{ priority }}"
     tags: 
         Stack: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ecs-ansible"
         Managed by: Managed by Ansible
