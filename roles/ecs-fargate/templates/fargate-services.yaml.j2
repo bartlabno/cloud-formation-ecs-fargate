@@ -257,7 +257,7 @@ Resources:
   ListenerRuleHttp:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
-      ListenerArn: !Ref {% if https_listener is defined %}ListenerHttps{% else %}ListenerHttp{% endif %}
+      ListenerArn: !Ref {% if http_listener is defined %}ListenerHttp{% else %}ListenerHttps{% endif %}
       
       Priority: !Ref Priority
       Conditions:
