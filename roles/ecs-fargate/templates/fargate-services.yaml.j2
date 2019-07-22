@@ -257,7 +257,7 @@ Resources:
           Type: forward
 
 {% if http_listener is defined or https_listener is defined %}
-  ListenerRule:
+  ListenerRuleHttp:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn: !Ref {% if https_listener is defined %}ListenerHttps{% else %}ListenerHttp{% endif %}
