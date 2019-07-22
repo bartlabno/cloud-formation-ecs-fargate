@@ -55,6 +55,24 @@
         Managed by: Managed by Ansible
   register: core_outputs
 
+- name: register http listener rule if exists
+  shell: aws elbv2 describe-listeners --load-balancer-arn {{ core_outputs.stack_outputs.LoadBalancer }} --region {{ project_region }} --query 'Listeners[?Port==`80`].ListenerArn' --output text
+  register: http_listener
+  ignore_errors: yes
+
+- name: register https listener rule if exists
+  shell: aws elbv2 describe-listeners --load-balancer-arn {{ core_outputs.stack_outputs.LoadBalancer }} --region {{ project_region }} --query 'Listeners[?Port==`443`].ListenerArn' --output text
+  register: https_listener
+  ignore_errors: yes
+
+- name: set listener http
+  set_fact: http_rule="{{ http_listener.stdout }}"
+  when: http_listener is defined
+
+- name: set listener https
+  set_fact: https_rule="{{ https_listener.stdout }}"
+  when: https_listener is defined
+
 - name: service fargate stack
   local_action:
     module: cloudformation
@@ -87,7 +105,9 @@
         MemoryLimit: "{{ mem_limit }}"
         DesiredCount: "{{ desired_count }}"
         HealthCheckPath: "{{ health_check }}"
-        Priority: "{{ priority }}"
+        Priority: "{{ port_expose }}"
+        ListenerHttp: "{{ http_rule }}"
+        ListenerHttps: "{{ https_rule }}"
     tags: 
         Stack: "{{ project_name }}-{{ application_name }}-{{ current_env }}-ecs-ansible"
         Managed by: Managed by Ansible

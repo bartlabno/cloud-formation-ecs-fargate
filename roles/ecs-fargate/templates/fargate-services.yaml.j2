@@ -97,6 +97,19 @@ Parameters:
     Type: Number
 {% endif %}
 
+{% if http_listener is defined %}
+  ListenerHttp:
+    Description: HTTP Listerner for rule
+    Type: String
+{% endif %}
+
+{% if https_listener is defined %}
+  ListenerHttps:
+    Description: HTTPS Listerner for rules
+    Type: String
+{% endif %}
+
+
   LoadBalancer:
     Description: LB details
     Type: String
@@ -242,6 +255,23 @@ Resources:
       Actions:
         - TargetGroupArn: !Ref TargetGroup
           Type: forward
+
+{% if http_listener is defined or https_listener is defined %}
+  ListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref {% if https_listener is defined %}ListenerHttps{% else %}ListenerHttp{% endif %}
+      
+      Priority: !Ref Priority
+      Conditions:
+        - Field: host-header
+          Values:
+            - !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}
+      Actions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+{% endif %}
+
 
 # Route 53 dns record
   RecordSet:
