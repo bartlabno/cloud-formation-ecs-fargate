@@ -97,18 +97,15 @@ Parameters:
     Type: Number
 {% endif %}
 
-{% if http_listener is defined %}
   ListenerHttp:
     Description: HTTP Listerner for rule
     Type: String
-{% endif %}
+    Default: null
 
-{% if https_listener is defined %}
   ListenerHttps:
     Description: HTTPS Listerner for rules
     Type: String
-{% endif %}
-
+    Default: null
 
   LoadBalancer:
     Description: LB details
