@@ -11,5 +11,5 @@ desired_count: 1
 use_hosted_zone: true
 root_account: 0
 priority: 1
-http_rule: "null"
-https_rule: "null"
+http_rule: default
+https_rule: default
