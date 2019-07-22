@@ -67,11 +67,11 @@
 
 - name: set listener http
   set_fact: http_rule="{{ http_listener.stdout }}"
-  when: http_listener is defined
+  ignore_errors: yes
 
 - name: set listener https
   set_fact: https_rule="{{ https_listener.stdout }}"
-  when: https_listener is defined
+  ignore_errors: yes
 
 - name: service fargate stack
   local_action:
