@@ -253,11 +253,11 @@ Resources:
         - TargetGroupArn: !Ref TargetGroup
           Type: forward
 
-{% if http_listener is defined or https_listener is defined %}
+{% if 'arn' in http_rule or 'arn' in http_rule %}
   ListenerRuleHttp:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
-      ListenerArn: !Ref {% if http_listener is defined %}ListenerHttp{% else %}ListenerHttps{% endif %}
+      ListenerArn: !Ref {% if 'arn' in https_rule %}ListenerHttps{% else %}ListenerHttp{% endif %}
       
       Priority: !Ref Priority
       Conditions:
