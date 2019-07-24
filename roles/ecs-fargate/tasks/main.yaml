@@ -27,6 +27,14 @@
   set_fact: use_subnets="{{ subnets.stdout }}"
   when: project_env[current_env].use_subnets is not defined
 
+- name: set vpc if defined
+  set_fact: use_vpc="{{ project_env[current_env].use_vpc }}"
+  when: project_env[current_env].use_vpc is defined
+
+- name: set subnets if defined
+  set_fact: use_subnets="{{ project_env[current_env].use_subnets }}"
+  when: project_env[current_env].use_subnets is defined
+
 - name: secrets workaround
   shell: aws secretsmanager get-secret-value --secret-id /{{ project_name }}/{{ current_env }}/{{ application_name }}/{{ item }} --output text --query SecretString
   when: secret_vars is defined
