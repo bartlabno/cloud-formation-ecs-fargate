@@ -163,7 +163,7 @@ Resources:
       ContainerDefinitions:
         - Name: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
           Essential: true
-          Image: !Sub {% if root_account is defined %}${RootAccount}{% else %}${AWS::AccountId}{% endif %}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-${ApplicationName}:${BranchName}-${BuildNumber}
+          Image: !Sub {% if root_account is defined %}${RootAccount}{% else %}${AWS::AccountId}{% endif %}.dkr.ecr.{{ project_region }}.amazonaws.com/${ProjectName}-${ApplicationName}:${BranchName}-${BuildNumber}
           PortMappings:
             - ContainerPort: !Ref PortExpose
               HostPort: !Ref PortExpose
