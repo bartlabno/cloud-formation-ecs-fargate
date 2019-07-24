@@ -12,20 +12,20 @@
 - name: check default vpc if not defined
   command: aws ec2 describe-vpcs --profile {{ current_env }} --region "{{ env_region }}" --filters Name=isDefault,Values=true --output text --query Vpcs[].VpcId
   register: default_vpc
-  when: use_vpc is not defined
+  when: project_env[current_env].use_vpc is not defined
 
 - name: check default subnets if not defined
   shell: aws ec2 describe-subnets --profile {{ current_env }} --region "{{ env_region }}" --filters Name=default-for-az,Values=true Name=vpc-id,Values="{{ default_vpc.stdout }}" --output text --query Subnets[].SubnetId | tr "\\t" ", "
   register: subnets
-  when: use_subnets is not defined
+  when: project_env[current_env].use_subnets is not defined
 
 - name: set default vpc if not defined
   set_fact: use_vpc="{{ default_vpc.stdout }}"
-  when: use_vpc is not defined
+  when: project_env[current_env].use_vpc is not defined
 
 - name: set default subnet if not defined
   set_fact: use_subnets="{{ subnets.stdout }}"
-  when: use_subnets is not defined
+  when: project_env[current_env].use_subnets is not defined
 
 - name: secrets workaround
   shell: aws secretsmanager get-secret-value --secret-id /{{ project_name }}/{{ current_env }}/{{ application_name }}/{{ item }} --output text --query SecretString
@@ -62,13 +62,13 @@
   register: core_outputs
 
 - name: register http listener rule if exists
-  shell: aws elbv2 describe-listeners --load-balancer-arn {{ core_outputs.stack_outputs.LoadBalancer }} --region {{ env_region }} --query 'Listeners[?Port==`80`].ListenerArn' --output text
+  shell: aws elbv2 describe-listeners --profile {{ current_env }} --load-balancer-arn {{ core_outputs.stack_outputs.LoadBalancer }} --region {{ env_region }} --query 'Listeners[?Port==`80`].ListenerArn' --output text
   register: http_listener
   when: port_expose != 80
   ignore_errors: yes
 
 - name: register https listener rule if exists
-  shell: aws elbv2 describe-listeners --load-balancer-arn {{ core_outputs.stack_outputs.LoadBalancer }} --region {{ env_region }} --query 'Listeners[?Port==`443`].ListenerArn' --output text
+  shell: aws elbv2 describe-listeners --profile {{ current_env }} --load-balancer-arn {{ core_outputs.stack_outputs.LoadBalancer }} --region {{ env_region }} --query 'Listeners[?Port==`443`].ListenerArn' --output text
   register: https_listener
   when: port_expose != 443
   ignore_errors: yes
