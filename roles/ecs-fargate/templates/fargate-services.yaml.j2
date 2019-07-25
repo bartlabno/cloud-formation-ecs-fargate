@@ -238,6 +238,7 @@ Resources:
       DomainValidationOptions:
             - DomainName: !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}
               ValidationDomain: !Ref RootDomain
+      ValidationMethod: DNS
 {% endif %}
 
   Listener:
