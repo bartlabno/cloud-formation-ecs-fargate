@@ -284,6 +284,36 @@ Resources:
       ResourceRecords: 
         - !Ref LoadBalancerDns
 
+{% if (port_expose == 80) or (port_expose == 443) %}
+  RecordSetFrontend:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref {% if use_hosted_zone %}ExistHostedZone{% else %}HostedZone
+      {% endif %}
+
+      Comment: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
+      Name: !Sub ${EnvironmentName}.${ProjectName}.${RootDomain}.
+      Type: CNAME
+      TTL: !Ref Ttl
+      ResourceRecords: 
+        - !Ref LoadBalancerDns
+{% endif %}
+
+{% if ((port_expose == 80) or (port_expose == 443)) and (current_env == 'prod') %}
+  RecordSetProdFrontend:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref {% if use_hosted_zone %}ExistHostedZone{% else %}HostedZone
+      {% endif %}
+
+      Comment: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
+      Name: !Sub ${ProjectName}.${RootDomain}.
+      Type: CNAME
+      TTL: !Ref Ttl
+      ResourceRecords: 
+        - !Ref LoadBalancerDns
+{% endif %}
+
 Outputs:
   Domain:
     Description: Domain
