@@ -284,7 +284,7 @@ Resources:
       ResourceRecords: 
         - !Ref LoadBalancerDns
 
-{% if project_env[current_env] == 'dev' %}
+{% if 'dev' in project_env[current_env] %}
 {% for env in project_env %}
 {% if (port_expose == 80) or (port_expose == 443) %}
   RecordSet{{ env }}Frontend:
