@@ -284,34 +284,23 @@ Resources:
       ResourceRecords: 
         - !Ref LoadBalancerDns
 
+{% if project_env[current_env] == 'dev' %}
+{% for env in project_env %}
 {% if (port_expose == 80) or (port_expose == 443) %}
-  RecordSetFrontend:
+  RecordSet{{ env }}Frontend:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: !Ref {% if use_hosted_zone %}ExistHostedZone{% else %}HostedZone
       {% endif %}
 
-      Comment: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
-      Name: !Sub ${EnvironmentName}.${ProjectName}.${RootDomain}.
+      Comment: !Sub www-{{ env }}-${ApplicationName}-${EnvironmentName}
+      Name: !Sub ${ProjectName}.{{ env }}.${RootDomain}.
       Type: CNAME
       TTL: !Ref Ttl
       ResourceRecords: 
-        - !Ref LoadBalancerDns
+        - !Ref ${ApplicationName}.{{ env }}.${ProjectName}.${RootDomain}.
 {% endif %}
-
-{% if ((port_expose == 80) or (port_expose == 443)) and (current_env == 'prod') %}
-  RecordSetProdFrontend:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId: !Ref {% if use_hosted_zone %}ExistHostedZone{% else %}HostedZone
-      {% endif %}
-
-      Comment: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
-      Name: !Sub ${ProjectName}.${RootDomain}.
-      Type: CNAME
-      TTL: !Ref Ttl
-      ResourceRecords: 
-        - !Ref LoadBalancerDns
+{% endfor %}
 {% endif %}
 
 Outputs:
