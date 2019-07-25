@@ -230,10 +230,24 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
 
+{% if port_expose == 443 %}
+  PublicCert:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}.
+      DomainValidationOptions:
+            - DomainName: !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}.
+              ValidationDomain: !Ref RootDomain
+{% endif %}
+
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref LoadBalancer
+{% if port_expose == 443 %}
+      Certificates:
+        - !Ref PublicCert
+{% endif %}
       Port: !Ref PortExpose
       Protocol: HTTP
       DefaultActions:
