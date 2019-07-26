@@ -247,7 +247,7 @@ Resources:
       LoadBalancerArn: !Ref LoadBalancer
 {% if port_expose == 443 %}
       Certificates:
-        - !Ref PublicCert
+        - CertificateArn: !Ref PublicCert
 {% endif %}
       Port: !Ref PortExpose
       Protocol: HTTP
