@@ -230,7 +230,7 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
 
-{% if port_expose == 443 %}
+{% if port_expose != 80 %}
   PublicCert:
     Type: AWS::CertificateManager::Certificate
     Properties:
@@ -245,12 +245,12 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref LoadBalancer
-{% if port_expose == 443 %}
+{% if port_expose == 80 %}
+      Protocol: HTTP
+{% else %}
       Certificates:
         - CertificateArn: !Ref PublicCert
       Protocol: HTTPS
-{% else %}
-      Protocol: HTTP
 {% endif %}
       Port: !Ref PortExpose
       DefaultActions:
@@ -270,7 +270,22 @@ Resources:
         - TargetGroupArn: !Ref TargetGroup
           Type: forward
 
-{% if 'arn' in http_rule or 'arn' in http_rule %}
+{% if port_expose == 443 %}
+  Listener80:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+    Protocol: HTTP
+    Port: 80
+    DefaultActions:
+      - Type: redirect
+        RedirectConfig:
+          StatusCode: "HTTP_301"
+          Protocol: "HTTPS"
+{% endif %}
+
+
+{% if 'arn' in http_rule or 'arn' in https_rule %}
   ListenerRuleHttp:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
