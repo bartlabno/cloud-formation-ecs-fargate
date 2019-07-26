@@ -248,9 +248,11 @@ Resources:
 {% if port_expose == 443 %}
       Certificates:
         - CertificateArn: !Ref PublicCert
+      Protocol: HTTPS
+{% else %}
+      Protocol: HTTP
 {% endif %}
       Port: !Ref PortExpose
-      Protocol: HTTP
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref DefaultTargetGroup
