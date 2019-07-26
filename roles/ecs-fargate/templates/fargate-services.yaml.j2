@@ -323,7 +323,7 @@ Resources:
   RecordSet{{ env }}Frontend:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneId: !Ref {{ root_zone }}
+      HostedZoneId: {{ root_zone }}
       Comment: !Sub www-{{ env }}-${ApplicationName}-${EnvironmentName}
       Name: !Sub ${ProjectName}.{{ env }}.${RootDomain}.
       Type: CNAME
