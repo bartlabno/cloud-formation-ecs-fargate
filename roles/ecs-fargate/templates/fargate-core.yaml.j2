@@ -94,13 +94,18 @@ Resources:
       VpcId: !Ref VPC
       GroupDescription: Access to the load balancer that sits in front of ECS
       SecurityGroupIngress:
+{% for inbound_range in project_env[current_env].allowed_ip %}
         - IpProtocol: -1
-          CidrIp: !Ref AllowedIp
+          CidrIp: !Ref {{ inbound_range }}
+{% endfor %}
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: InternalLoadBalancerSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${EnvironmentName}-LoadBalancers
+          Value: !Sub ${ProjectName}-${EnvironmentName}-public-LoadBalancer
 
-  FargateSecurityGroup:
+  InternalLoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref VPC
@@ -108,9 +113,27 @@ Resources:
       SecurityGroupIngress:
         - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
           IpProtocol: -1
+      SecurityGroupEgress:
+        - SourceSecurityGroupId: !Ref FargateSecurityGroup
+          IpProtocol: -1
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${EnvironmentName}-ELB-ECS
+          Value: !Sub ${ProjectName}-${EnvironmentName}-internal-LoadBalancer
+
+  FargateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Access to the ECS Fargate from ELB only
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref InternalLoadBalancerSecurityGroup
+          IpProtocol: -1
+      SecurityGroupEgress:
+        - SourceSecurityGroupId: !Ref FargateSecurityGroup
+          IpProtocol: -1
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${EnvironmentName}-fargate-ecs
 
 # Cluster creation, services providing
   Cluster:
@@ -126,10 +149,29 @@ Resources:
       RetentionInDays: 365
 
 # Load balancer default configuration
+  InternalLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub internal-${ProjectName}-${EnvironmentName}-LB
+      Scheme: internal
+      Subnets: !Split
+        - ","
+        - !Ref Subnets
+      SecurityGroups:
+        - !Ref InternalLoadBalancerSecurityGroup
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Managed by
+          Value: CloudFormation and DevOps at Burrows
+        - Key: Name
+          Value: !Sub internal loadbalancer for ${ProjectName}
+
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub ${ProjectName}-${EnvironmentName}-LB
+      Name: !Sub public-${ProjectName}-${EnvironmentName}-LB
+      Scheme: internet-facing
       Subnets: !Split
         - ","
         - !Ref Subnets
@@ -141,7 +183,7 @@ Resources:
         - Key: Managed by
           Value: CloudFormation and DevOps at Burrows
         - Key: Name
-          Value: !Ref ProjectName
+          Value: !Sub public loadbalancer for ${ProjectName}
 
 # Access to register/unregister service with ALB.
   ECSTaskExecutionRole:
