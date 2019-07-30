@@ -99,9 +99,6 @@ Resources:
           CidrIp: {{ item }}
 {% endfor %}
 
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: FargateSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-${EnvironmentName}-public-LoadBalancer
