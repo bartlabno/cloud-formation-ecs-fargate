@@ -96,7 +96,7 @@ Resources:
       SecurityGroupIngress:
 {% for item in project_env[current_env].allowed_ip %}
         - IpProtocol: -1
-          CidrIp: !Ref {{ item }}
+          CidrIp: {{ item }}
 {% endfor %}
 
       SecurityGroupEgress:
