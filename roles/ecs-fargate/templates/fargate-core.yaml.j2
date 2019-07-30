@@ -100,25 +100,10 @@ Resources:
 {% endfor %}
       SecurityGroupEgress:
         - IpProtocol: -1
-          CidrIp: InternalLoadBalancerSecurityGroup
+          CidrIp: FargateSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-${EnvironmentName}-public-LoadBalancer
-
-  InternalLoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId: !Ref VPC
-      GroupDescription: Access to the ECS Fargate from ELB only
-      SecurityGroupIngress:
-        - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
-          IpProtocol: -1
-      SecurityGroupEgress:
-        - SourceSecurityGroupId: !Ref FargateSecurityGroup
-          IpProtocol: -1
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${EnvironmentName}-internal-LoadBalancer
 
   FargateSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -126,10 +111,7 @@ Resources:
       VpcId: !Ref VPC
       GroupDescription: Access to the ECS Fargate from ELB only
       SecurityGroupIngress:
-        - SourceSecurityGroupId: !Ref InternalLoadBalancerSecurityGroup
-          IpProtocol: -1
-      SecurityGroupEgress:
-        - SourceSecurityGroupId: !Ref FargateSecurityGroup
+        - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
           IpProtocol: -1
       Tags:
         - Key: Name
@@ -149,24 +131,6 @@ Resources:
       RetentionInDays: 365
 
 # Load balancer default configuration
-  InternalLoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Name: !Sub internal-${ProjectName}-${EnvironmentName}-LB
-      Scheme: internal
-      Subnets: !Split
-        - ","
-        - !Ref Subnets
-      SecurityGroups:
-        - !Ref InternalLoadBalancerSecurityGroup
-      Tags:
-        - Key: Environment
-          Value: !Ref EnvironmentName
-        - Key: Managed by
-          Value: CloudFormation and DevOps at Burrows
-        - Key: Name
-          Value: !Sub internal loadbalancer for ${ProjectName}
-
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
