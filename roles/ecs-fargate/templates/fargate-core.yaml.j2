@@ -94,11 +94,9 @@ Resources:
       VpcId: !Ref VPC
       GroupDescription: Access to the load balancer that sits in front of ECS
       SecurityGroupIngress:
-{% for inbound_range in project_env[current_env].allowed_ip %}
-{% for elem in inbound_range %}
+{% for item in project_env[current_env].allowed_ip %}
         - IpProtocol: -1
-          CidrIp: !Ref {{ elem }}
-{% endfor %}
+          CidrIp: !Ref {{ item }}
 {% endfor %}
 
       SecurityGroupEgress:
