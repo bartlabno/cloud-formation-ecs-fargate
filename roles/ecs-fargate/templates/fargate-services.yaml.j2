@@ -138,7 +138,7 @@ Resources:
       TaskDefinition: !Ref TaskDefinition
       LoadBalancers:
         - ContainerName: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}
-          ContainerPort: !Ref PortExpose
+          ContainerPort: {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
           TargetGroupArn: !Ref TargetGroup
       LaunchType: FARGATE
       NetworkConfiguration:
@@ -165,8 +165,8 @@ Resources:
           Essential: true
           Image: !Sub {% if root_account is defined %}${RootAccount}{% else %}${AWS::AccountId}{% endif %}.dkr.ecr.{{ project_region }}.amazonaws.com/${ProjectName}-${ApplicationName}:${BranchName}-${BuildNumber}
           PortMappings:
-            - ContainerPort: !Ref PortExpose
-              HostPort: !Ref PortExpose
+            - ContainerPort: {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
+              HostPort: {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -174,8 +174,8 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Ref ApplicationName
           Environment:
-            - Name: foo
-              Value: bar
+            - Name: ECS_istredd
+              Value: Ansible_Managed
 {% if app_type == 'dotnet' %}
             - Name: "ASPNETCORE_URLS"
               Value: "http://+:{{ port_expose }}"
@@ -205,7 +205,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !Ref VPC
-      Port: !Ref PortExpose
+      Port: !Ref {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
       Protocol: HTTP
       TargetType: ip
       Matcher:
@@ -221,7 +221,7 @@ Resources:
     Properties:
       Name: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}-default
       VpcId: !Ref VPC
-      Port: !Ref PortExpose
+      Port: !Ref {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
       Protocol: HTTP
       TargetType: ip
       HealthCheckIntervalSeconds: 10
