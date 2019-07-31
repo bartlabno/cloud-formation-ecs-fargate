@@ -243,7 +243,7 @@ Resources:
   PublicCert:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      DomainName: !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}
+      DomainName: !Sub *.${EnvironmentName}.${ProjectName}.${RootDomain}
       DomainValidationOptions:
             - DomainName: !Sub ${ApplicationName}.${EnvironmentName}.${ProjectName}.${RootDomain}
               ValidationDomain: !Ref RootDomain
