@@ -211,7 +211,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !Ref VPC
-      Port: !Ref {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
+      Port: {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
 
       Protocol: HTTP
       TargetType: ip
@@ -228,7 +228,7 @@ Resources:
     Properties:
       Name: !Sub ${ProjectName}-${ApplicationName}-${EnvironmentName}-default
       VpcId: !Ref VPC
-      Port: !Ref {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
+      Port: {% if port_expose == 443 %}80{% else %}!Ref PortExpose{% endif %}
 
       Protocol: HTTP
       TargetType: ip
